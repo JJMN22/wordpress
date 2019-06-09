@@ -19,12 +19,23 @@ def open_html(path):
         return f.read()
 
 
-def write_text(html, path):
+def get_htmls(link, count):
+    chapter = rq.get(link).content
+    save_html(chapter, f"{html_path}/{count:04}.html")
+
+    soup = BeautifulSoup(chapter, 'html.parser')
+    next_link = soup.find(class_="nav-next").contents[0]['href']
+    if next_link is not None:
+        get_htmls(next_link, count+1)
+
+
+def write_chapter(html, book_path):
+
     # setting up text and document
     soup = BeautifulSoup(open_html(html), 'html.parser')
     title = soup.find(class_="entry-title").get_text()
     contents = soup.find(class_="entry-content").find_all('p')
-    chapter = Document()
+    chapter = Document(book_path)
 
     # Writing text begins here
 
@@ -64,24 +75,22 @@ def write_text(html, path):
 
     # End formatting and save
     chapter.add_page_break()
-    chapter.save(path)
+    chapter.save(book_path)
 
 
-# ch43 = rq.get("https://practicalguidetoevil.wordpress.com/2019/05/22/chapter-43-treachery/")
-# save_html(ch43.content, f"{html_path}/ch43_html")
-# write_text(f"{html_path}/ch43_html")
-
-def get_htmls(link, count):
-    chapter = rq.get(link).content
-    save_html(chapter, f"{html_path}/{count:04}.html")
-
-    soup = BeautifulSoup(chapter, 'html.parser')
-    next_link = soup.find(class_="nav-next").contents[0]['href']
-    if next_link is not None:
-        get_htmls(next_link, count+1)
+def write_book(book_num, start_ch, end_ch):
+    book = Document()
+    book.save(f"PTGE_{book_num}.docx")
+    for num in range(start_ch, end_ch+1):
+        write_chapter(f"HTML/{num:04}.html", f"PTGE_{book_num}.docx")
 
 
-for i in range(0, 395):
-    padded = f"{i:04}"
-    write_text(f"{html_path}/{padded}.html", f"{save_path}/{padded}.docx")
+#write_book(1, 0, 29)
+write_book(2, 30, 97)
+write_book(3, 98, 208)
+write_book(4, 209, 324)
+write_book(5, 325, 394)
+
+
+
 
